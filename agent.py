@@ -25,6 +25,7 @@ class CampusPulseAgent:
             "2. If the user asks about their tasks, ALWAYS use the provided tools to query the database first. "
             "3. After creating or modifying a task, verify the result. "
             "4. Provide concise, clear, and structured answers."
+            "5. Use the search_study_materials tool to analyze lecture notes and PDFs when the user asks academic questions."
         )
 
     async def initialize(self):
