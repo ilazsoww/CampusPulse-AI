@@ -5,9 +5,16 @@ import database
 from models import Assignment
 import PyPDF2
 import urllib.request
+from integrations.google_calendar import get_calendar_events
 
 # Инициализируем MCP сервер
 mcp = FastMCP("CampusPulse")
+
+@mcp.tool()
+def get_google_calendar_events(days_ahead: int = 7) -> str:
+    """Read events from the authenticated user primary Google Calendar. Requires local OAuth setup."""
+    result = get_calendar_events(days_ahead=days_ahead)
+    return json.dumps(result, ensure_ascii=False)
 
 @mcp.tool()
 def get_assignments(status: str = None) -> str:
