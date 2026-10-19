@@ -10,3 +10,7 @@ venv/
 __pycache__/
 *.pyc
 .pytest_cache/
+# Local Google OAuth credentials — never commit these
+credentials.json
+token.json
+client_secret*.json

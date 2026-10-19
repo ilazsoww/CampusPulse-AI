@@ -6,11 +6,14 @@ from google.genai import types
 
 from mcp_client import MCPBridge
 from config import GEMINI_API_KEY
+import logging
+
+logger = logging.getLogger(__name__)
 
 class CampusPulseAgent:
     def __init__(self):
         self.client = genai.Client(api_key=GEMINI_API_KEY)
-        self.model_id = 'gemini-3.8-flash' 
+        self.model_id = 'gemini-3.5-flash-lite'
         self.mcp = MCPBridge()
         self.tools = []
         
@@ -64,6 +67,45 @@ class CampusPulseAgent:
             function_declarations.append(func_decl)
             
         self.tools = [types.Tool(function_declarations=function_declarations)]
+
+    def _get_user_friendly_error(self, error):
+        """Convert API and connection errors into user-friendly messages."""
+
+        status_code = getattr(error, "code", None)
+
+        if status_code == 429:
+            return (
+                "Сейчас превышен лимит запросов к ИИ. "
+                "Попробуй позже или проверь квоты API."
+            )
+
+        if status_code in (401, 403):
+            return (
+                "Не удалось авторизоваться в сервисе ИИ. "
+                "Проверь API-ключ и настройки доступа."
+            )
+
+        if status_code is not None and status_code >= 500:
+            return (
+                "Сервис ИИ временно недоступен. "
+                "Попробуй повторить запрос позже."
+            )
+
+        error_text = str(error).lower()
+
+        if any(term in error_text for term in (
+            "connection", "timeout", "timed out",
+            "network", "ssl", "handshake"
+        )):
+            return (
+                "Не удалось подключиться к сервису ИИ. "
+                "Проверь интернет-соединение и попробуй ещё раз."
+            )
+
+        return (
+            "Не удалось обработать запрос. "
+            "Попробуй переформулировать его или повторить позже."
+        )
 
     async def process_request(self, user_prompt: str, chat_history: list = None):
         """Reasoning Loop: генератор, возвращающий шаги выполнения агента."""
@@ -139,8 +181,12 @@ class CampusPulseAgent:
                 yield {"type": "error", "text": "Max reasoning iterations reached. Stopping to prevent infinite loop."}
 
         except Exception as e:
-            # Грациозно перехватываем ошибку без краша генератора
-            yield {"type": "error", "text": f"Agent encountered an internal error: {str(e)}"}
+            logger.exception("Error while processing user request")
+
+            yield {
+                "type": "error",
+                "text": self._get_user_friendly_error(e)
+            }
 
     async def close(self):
         await self.mcp.disconnect()

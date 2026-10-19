@@ -1,6 +1,7 @@
 import streamlit as st
 import asyncio
 import database
+from integrations.google_calendar import get_calendar_events
 from agent import CampusPulseAgent
 import pandas as pd
 
@@ -51,6 +52,30 @@ with st.sidebar:
 
     st.divider()
 
+    st.subheader("📅 Google Calendar")
+    st.caption("События из вашего личного Google Calendar")
+
+    if st.button("Показать события на 7 дней"):
+        st.session_state["calendar_result"] = get_calendar_events(7)
+
+    calendar_result = st.session_state.get("calendar_result")
+
+    if calendar_result:
+        if "error" in calendar_result:
+            st.warning(calendar_result["error"])
+        else:
+            events = calendar_result.get("events", [])
+
+            if events:
+                df = pd.DataFrame(events)
+                df = df[["title", "start", "location"]]
+                df.columns = ["Мероприятие", "Начало", "Место"]
+                st.dataframe(df, use_container_width=True, hide_index=True)
+            else:
+                st.info("На ближайшие 7 дней событий нет.")
+
+    st.divider()
+
     st.subheader("➕ Manual Task Entry")
     with st.form("add_task_form"):
         # Использование персонализированного примера (AITU / ORKEN) для удобства презентации
@@ -89,27 +114,54 @@ st.markdown("Ask me to manage your schedule, create tasks, or show priorities!")
 # Функция для асинхронного запуска агента и потокового вывода шагов в UI
 async def process_user_input(prompt, status_container, response_container):
     agent = CampusPulseAgent()
-    await agent.initialize()
-    
     final_text = ""
+
     try:
-        # Для простоты демо мы не передаем всю историю, агент работает с БД как с источником истины
-        async for step in agent.process_request(prompt, chat_history=None):
+        await agent.initialize()
+
+        async for step in agent.process_request(
+            prompt,
+            chat_history=None
+        ):
             if step["type"] == "tool_call":
-                status_container.write(f"🛠️ **Agent elected to call tool:** `{step['tool']}`")
-                status_container.json(step['args'])
+                status_container.write(
+                    f"🛠️ **Вызов инструмента:** `{step['tool']}`"
+                )
+                status_container.json(step["args"])
+
             elif step["type"] == "tool_result":
-                status_container.write("✅ **Tool execution result:**")
-                status_container.code(step['result'])
+                status_container.write("✅ **Результат инструмента:**")
+                status_container.code(step["result"])
+
             elif step["type"] == "final_answer":
-                response_container.markdown(step['text'])
-                final_text = step['text']
+                response_container.markdown(step["text"])
+                final_text = step["text"]
+
             elif step["type"] == "error":
-                response_container.error(step['text'])
-                final_text = step['text']
+                response_container.error(step["text"])
+                final_text = step["text"]
+
+    except Exception:
+        import logging
+        logging.getLogger(__name__).exception(
+            "Failed to initialize or run CampusPulse agent"
+        )
+
+        final_text = (
+            "Не удалось запустить ИИ-ассистента. "
+            "Проверь настройки и подключение, затем попробуй снова."
+        )
+        response_container.error(final_text)
+
     finally:
-        await agent.close()
-        
+        try:
+            await agent.close()
+        except Exception:
+            import logging
+            logging.getLogger(__name__).exception(
+                "Failed to close CampusPulse agent"
+            )
+
     return final_text
 
 # Отображение истории сообщений
