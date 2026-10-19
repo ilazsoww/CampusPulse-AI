@@ -4,6 +4,7 @@ from mcp.server.fastmcp import FastMCP
 import database
 from models import Assignment
 import PyPDF2
+import urllib.request
 
 # Инициализируем MCP сервер
 mcp = FastMCP("CampusPulse")
@@ -84,6 +85,28 @@ def search_study_materials(query: str) -> str:
         return f"No materials found matching the query: '{query}'"
     
     return "\n".join(results)
+
+@mcp.tool()
+def check_github_repo(owner: str, repo: str) -> str:
+    """
+    Check public GitHub repository details, open issues count, and status to track academic coursework and tasks.
+    """
+    url = f"https://api.github.com/repos/{owner}/{repo}"
+    headers = {"User-Agent": "CampusPulse-AI-Student-App"}
+    try:
+        req = urllib.request.Request(url, headers=headers)
+        with urllib.request.urlopen(req) as response:
+            data = json.loads(response.read().decode())
+            info = {
+                "name": data.get("name"),
+                "description": data.get("description"),
+                "open_issues": data.get("open_issues_count"),
+                "last_updated": data.get("updated_at"),
+                "url": data.get("html_url")
+            }
+            return json.dumps(info, ensure_ascii=False)
+    except Exception as e:
+        return f"Error fetching GitHub repository data: {str(e)}"
 
 if __name__ == "__main__":
     # Запуск сервера в режиме stdio
