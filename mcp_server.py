@@ -73,8 +73,8 @@ def search_study_materials(query: str) -> str:
             if query.lower() in content.lower():
                 # Возвращаем фрагмент текста вокруг найденного слова (для экономии контекста)
                 idx = content.lower().find(query.lower())
-                start = max(0, idx - 200)
-                end = min(len(content), idx + 500)
+                start = max(0, idx - 400)
+                end = min(len(content), idx + 1200)
                 snippet = content[start:end].replace('\n', ' ')
                 results.append(f"Found in {filename}:\n...{snippet}...\n")
                 
