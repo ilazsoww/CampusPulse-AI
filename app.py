@@ -26,6 +26,18 @@ with st.sidebar:
     col1, col2 = st.columns(2)
     col1.metric("Pending", len(pending))
     col2.metric("Completed", len(completed))
+
+    st.subheader("📎 Upload Study Materials")
+    uploaded_file = st.file_uploader("Upload PDF or TXT", type=["pdf", "txt", "md"])
+    if uploaded_file is not None:
+        import os
+        # Убеждаемся, что папка существует
+        os.makedirs("study_materials", exist_ok=True)
+        
+        file_path = os.path.join("study_materials", uploaded_file.name)
+        with open(file_path, "wb") as f:
+            f.write(uploaded_file.getbuffer())
+        st.success(f"File '{uploaded_file.name}' successfully attached and ready for analysis!")
     
     st.divider()
     
