@@ -16,8 +16,14 @@ An autonomous AI agent built for the GDG Astana hackathon to help university stu
 - **Storage**: SQLite
 - **Testing**: Pytest
 
-## Quick Start (Local Setup)
+---
 
+## Running the Project (Local Setup)
+
+**Recommended version:** the main branch.
+The project includes AI-powered study assistance and Google Calendar integration.
+
+#### Setup
 1. **Clone the repository and create a virtual environment:**
    ```bash
    python -m venv venv
@@ -28,7 +34,7 @@ An autonomous AI agent built for the GDG Astana hackathon to help university stu
     pip install -r requirements.txt
 
 3. Configure Environment Variables:
-    Rename .env.example to .env and add your free Google AI Studio key:
+    Rename .env.example to .env and add your free Google AI Studio key and configure the Google Calendar credentials, if using Calendar integration.:
     ```bash
     GEMINI_API_KEY="your_api_key_here"
     DB_PATH="campuspulse.db"
