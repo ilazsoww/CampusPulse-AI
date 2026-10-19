@@ -54,3 +54,16 @@ An autonomous AI agent built for the GDG Astana hackathon to help university stu
     Bash
     export GCP_PROJECT_ID="your-project-id"
     python deploy.py
+
+## Optional Google Calendar integration
+
+CampusPulse can read upcoming events from the **primary calendar of the Google account you authorize**. This is not an AITU-wide events feed.
+
+1. In [Google Cloud Console](https://console.cloud.google.com/), create/select a project and enable **Google Calendar API**.
+2. Configure the OAuth consent screen. If the app is in Testing mode, add your Google account as a test user.
+3. Create an OAuth client ID of type **Desktop app**, download its JSON file, and save it as `credentials.json` in the project root (next to `app.py`). Do not commit this file.
+4. Install dependencies: `pip install -r requirements.txt`.
+5. Run `python setup_google_calendar.py` and authorize read-only access in the browser. This creates a local `token.json`, which is also excluded from Git.
+6. Start or restart the app and ask: “Show my Google Calendar events for the next 7 days.”
+
+The agent exposes this through the `get_google_calendar_events` MCP tool. The tool returns setup instructions if OAuth has not been configured. Revoke access through your Google Account security/third-party connections settings and delete local `token.json` if you want to disconnect.
