@@ -81,7 +81,7 @@ class CampusPulseAgent:
                 temperature=0.2 
             )
 
-            max_iterations = 5
+            max_iterations = 8
             iteration = 0
             
             while iteration < max_iterations:
